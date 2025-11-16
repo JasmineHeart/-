@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>自定义形状词云生成工具</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>自定义形状词云生成工具</h1>
+      <p class="sub">上传形状图片 + 输入词语 → 生成词云</p>
+    </header>
+
+    <main class="app-main two-col">
+      <section class="controls left-col">
+        <div class="left-top">
+        <div class="panel">
+          <h3 class="panel-title">形状与掩码</h3>
+          <div class="form-vertical">
+            <div class="row file-row">
+              <label class="file-label">
+                <input type="file" id="imageUpload" accept="image/png,image/jpeg,image/webp" />
+                <span class="file-caption">选择形状图片（推荐 PNG，带透明背景）</span>
+              </label>
+              <button id="clearImageBtn" class="btn-ghost" type="button">清除</button>
+            </div>
+            <div class="row slider-row">
+              <span class="field-label">Alpha 阈值</span>
+              <input type="range" id="alphaThreshold" min="0" max="255" value="128" />
+              <input type="number" id="alphaVal" min="0" max="255" value="128" class="num-inline" />
+            </div>
+            <div class="row slider-row">
+              <span class="field-label">轮廓透明度</span>
+              <input type="range" id="maskOpacity" min="0" max="100" value="90" />
+              <input type="number" id="maskOpacityVal" min="0" max="100" value="90" class="num-inline" />
+            </div>
+            <canvas id="maskPreview" width="320" height="200" class="mask-preview"></canvas>
+          </div>
+        </div>
+        <div class="panel">
+          <h3 class="panel-title">全局参数</h3>
+          <div class="form-vertical">
+            <div class="row">
+              <label>
+                最小字号
+                <input type="number" id="minFont" value="16" />
+              </label>
+              <label>
+                最大字号
+                <input type="number" id="maxFont" value="96" />
+              </label>
+            </div>
+            <div class="row">
+              <label>
+                字体
+                <select id="fontFamily"></select>
+              </label>
+              <button id="uploadFontBtn" class="btn-ghost" type="button">上传字体</button>
+            </div>
+            <div class="row">
+              <label>
+                旋转角度
+                <select id="rotate" aria-label="旋转角度">
+                  <option value="random" selected>随机角度（-90°~90°）</option>
+                  <option value="0">水平排列（0°）</option>
+                  <option value="90">垂直排列（90°）</option>
+                  <option value="45">对角线排列（45°）</option>
+                  <option value="-45">反向对角线（-45°）</option>
+                  <option value="custom">自定义角度</option>
+                </select>
+              </label>
+              <label>
+                自定义角度
+                <input type="number" id="rotateAngle" value="0" min="-180" max="180" step="1" placeholder="请输入角度（0~360）" />
+              </label>
+            </div>
+            <div class="row theme-row">
+              <label>主题色</label>
+              <div id="themeChips" class="theme-chips">
+                <button type="button" class="theme-chip" data-color="#F59E0B" title="橙色" style="--chip:#F59E0B"></button>
+                <button type="button" class="theme-chip" data-color="#EF4444" title="红色" style="--chip:#EF4444"></button>
+                <button type="button" class="theme-chip" data-color="#0EA5E9" title="蓝色" style="--chip:#0EA5E9"></button>
+                <button type="button" class="theme-chip" data-color="#16A34A" title="绿色" style="--chip:#16A34A"></button>
+                <button type="button" class="theme-chip" data-color="#8B5CF6" title="紫色" style="--chip:#8B5CF6"></button>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+        </div>
+
+        <div class="left-bottom">
+        <div class="panel">
+          <h3 class="panel-title">词语与配置</h3>
+          <div class="form-vertical">
+            <table class="word-table">
+              <colgroup>
+                <col style="width:22%" />
+                <col style="width:22%" />
+                <col style="width:18%" />
+                <col style="width:10%" />
+                <col style="width:10%" />
+                <col style="width:12%" />
+                <col style="width:6%" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>词语</th>
+                  <th>颜色</th>
+                  <th>字体</th>
+                  <th>最小字号</th>
+                  <th>最大字号</th>
+                  <th>角度</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="wordTableBody"></tbody>
+            </table>
+            <textarea id="wordsInput" style="display:none"></textarea>
+            <small id="fontError" class="form-hint" aria-live="polite"></small>
+            <div class="actions" style="margin-top:12px">
+              <button id="generateBtn" class="btn-primary">生成词云</button>
+              <button id="clearBtn" class="btn-ghost">清空</button>
+            </div>
+          </div>
+        </div>
+        </div>
+      </section>
+      <section class="right-col">
+        <div class="right-top panel export-toolbar">
+          <div class="actions" style="justify-content:flex-end">
+            <button id="exportBtn" class="btn-secondary">导出 PNG</button>
+            <button id="exportSvgBtn" class="btn-secondary">导出 SVG</button>
+          </div>
+        </div>
+        <div class="right-bottom panel">
+          <div class="canvas-wrap">
+            <canvas id="cloudCanvas" width="640" height="400"></canvas>
+            <canvas id="debugCanvas" width="640" height="400"></canvas>
+            <div id="tooltip" class="tooltip" hidden></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    
+
+    <div id="cpOverlay" class="cp-overlay hidden"></div>
+    <div id="colorPicker" class="color-picker hidden" role="dialog" aria-modal="true">
+      <div class="cp-body">
+        <div class="cp-left">
+          <canvas id="cpSV" width="240" height="240"></canvas>
+        </div>
+        <div class="cp-mid">
+          <canvas id="cpHue" width="20" height="240"></canvas>
+        </div>
+        <div class="cp-right">
+          <div class="cp-preview">
+            <div class="cp-box cp-current"></div>
+            <div class="cp-box cp-new"></div>
+          </div>
+          <div class="cp-inputs">
+            <div class="row"><label>H<input id="cpH" type="number" min="0" max="360"></label><label>S<input id="cpS" type="number" min="0" max="100"></label><label>B<input id="cpV" type="number" min="0" max="100"></label></div>
+            <div class="row"><label>R<input id="cpR" type="number" min="0" max="255"></label><label>G<input id="cpG" type="number" min="0" max="255"></label><label>B<input id="cpB" type="number" min="0" max="255"></label></div>
+            <div class="row"><label>#<input id="cpHex" type="text" placeholder="RRGGBB"></label></div>
+          </div>
+          <div class="cp-actions">
+            <button id="cpOk" class="btn-primary">确定</button>
+            <button id="cpCancel" class="btn-ghost">取消</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2,.ttc" style="display:none" />
+  </body>
+  </html>
